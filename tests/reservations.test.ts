@@ -19,6 +19,19 @@ async function getAuthToken(
   return response.body.data.token as string;
 }
 
+const DAYS_UNTIL_FIRST_TEST_DATE = 30;
+
+// Returns a YYYY-MM-DD date string, `offset` days after the first test date.
+// testDate(0) = today + 30 days.
+function testDate(offset: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() + DAYS_UNTIL_FIRST_TEST_DATE + offset);
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
 describe('Authentication - POST /api/login', () => {
   describe('Successful Login', () => {
     it('should return 200 and JWT token for valid credentials (Alice)', async () => {
@@ -112,7 +125,7 @@ describe('Protected Routes - Authentication Required', () => {
   it('should return 401 when accessing reservations without token', async () => {
     const response = await request(app).post('/api/reservations').send({
       roomId: 'room-1',
-      startDate: '2026-06-15',
+      startDate: testDate(13),
       startTime: '10:00',
       endTime: '11:00',
     });
@@ -127,7 +140,7 @@ describe('Protected Routes - Authentication Required', () => {
       .set('Authorization', 'Bearer invalid-token')
       .send({
         roomId: 'room-1',
-        startDate: '2026-06-15',
+        startDate: testDate(13),
         startTime: '10:00',
         endTime: '11:00',
       });
@@ -142,7 +155,7 @@ describe('Protected Routes - Authentication Required', () => {
       .set('Authorization', 'InvalidFormat token')
       .send({
         roomId: 'room-1',
-        startDate: '2026-06-15',
+        startDate: testDate(13),
         startTime: '10:00',
         endTime: '11:00',
       });
@@ -161,7 +174,7 @@ describe('Create Reservation - POST /api/reservations', () => {
         .set('Authorization', `Bearer ${token}`)
         .send({
           roomId: 'room-1',
-          startDate: '2026-06-15',
+          startDate: testDate(13),
           startTime: '10:00',
           endTime: '11:00',
         });
@@ -171,8 +184,8 @@ describe('Create Reservation - POST /api/reservations', () => {
       expect(response.body.data).toMatchObject({
         roomId: 'room-1',
         userId: 'user-1',
-        startDate: '2026-06-15',
-        endDate: '2026-06-15',
+        startDate: testDate(13),
+        endDate: testDate(13),
         startTime: '10:00',
         endTime: '11:00',
       });
@@ -187,7 +200,7 @@ describe('Create Reservation - POST /api/reservations', () => {
         .set('Authorization', `Bearer ${token}`)
         .send({
           roomId: 'room-2',
-          startDate: '2026-06-15',
+          startDate: testDate(13),
           startTime: '14:00',
           endTime: '15:00',
         });
@@ -204,7 +217,7 @@ describe('Create Reservation - POST /api/reservations', () => {
         .set('Authorization', `Bearer ${token}`)
         .send({
           roomId: 'room-1',
-          startDate: '2026-06-16',
+          startDate: testDate(14),
           startTime: '09:30',
           endTime: '12:00',
         });
@@ -224,7 +237,7 @@ describe('Create Reservation - POST /api/reservations', () => {
         .set('Authorization', `Bearer ${token}`)
         .send({
           roomId: 'room-1',
-          startDate: '2026-06-17',
+          startDate: testDate(15),
           startTime: '14:15',
           endTime: '16:45',
         });
@@ -242,15 +255,15 @@ describe('Create Reservation - POST /api/reservations', () => {
         .set('Authorization', `Bearer ${token}`)
         .send({
           roomId: 'room-3',
-          startDate: '2026-06-18',
+          startDate: testDate(16),
           startTime: '23:00',
           endTime: '02:00',
         });
 
       expect(response.status).toBe(201);
       expect(response.body.data).toMatchObject({
-        startDate: '2026-06-18',
-        endDate: '2026-06-19',
+        startDate: testDate(16),
+        endDate: testDate(17),
         startTime: '23:00',
         endTime: '02:00',
       });
@@ -264,7 +277,7 @@ describe('Create Reservation - POST /api/reservations', () => {
         .set('Authorization', `Bearer ${token}`)
         .send({
           roomId: 'room-1',
-          startDate: '2026-06-19',
+          startDate: testDate(17),
           startTime: '10:00',
           endTime: '10:30',
         });
@@ -301,7 +314,7 @@ describe('Create Reservation - POST /api/reservations', () => {
         .set('Authorization', `Bearer ${token}`)
         .send({
           roomId: 'room-1',
-          startDate: '2026-06-15',
+          startDate: testDate(13),
           startTime: '9:00',
           endTime: '10:00',
         });
@@ -335,7 +348,7 @@ describe('Create Reservation - POST /api/reservations', () => {
         .set('Authorization', `Bearer ${token}`)
         .send({
           roomId: 'room-1',
-          startDate: '2026-06-15',
+          startDate: testDate(13),
         });
 
       expect(response.status).toBe(400);
@@ -350,7 +363,7 @@ describe('Create Reservation - POST /api/reservations', () => {
         .set('Authorization', `Bearer ${token}`)
         .send({
           roomId: 'room-1',
-          startDate: '2026-06-15',
+          startDate: testDate(13),
           startTime: '10:00',
           endTime: '10:15',
         });
@@ -367,7 +380,7 @@ describe('Create Reservation - POST /api/reservations', () => {
         .set('Authorization', `Bearer ${token}`)
         .send({
           roomId: 'room-1',
-          startDate: '2026-06-15',
+          startDate: testDate(13),
           startTime: '08:00',
           endTime: '21:00',
         });
@@ -384,7 +397,7 @@ describe('Create Reservation - POST /api/reservations', () => {
         .set('Authorization', `Bearer ${token}`)
         .send({
           roomId: 'room-1',
-          startDate: '2026-06-15',
+          startDate: testDate(13),
           startTime: '10:00',
           endTime: '10:00',
         });
@@ -401,7 +414,7 @@ describe('Create Reservation - POST /api/reservations', () => {
         .set('Authorization', `Bearer ${token}`)
         .send({
           roomId: 'room-1',
-          startDate: '2026-06-15',
+          startDate: testDate(13),
           startTime: '10:00',
           endTime: '09:00',
         });
@@ -420,7 +433,7 @@ describe('Create Reservation - POST /api/reservations', () => {
         .set('Authorization', `Bearer ${token}`)
         .send({
           roomId: 'room-999',
-          startDate: '2026-06-15',
+          startDate: testDate(13),
           startTime: '10:00',
           endTime: '11:00',
         });
@@ -440,7 +453,7 @@ describe('Create Reservation - POST /api/reservations', () => {
         .set('Authorization', `Bearer ${aliceToken}`)
         .send({
           roomId: 'room-1',
-          startDate: '2026-06-20',
+          startDate: testDate(18),
           startTime: '10:00',
           endTime: '11:00',
         });
@@ -450,7 +463,7 @@ describe('Create Reservation - POST /api/reservations', () => {
         .set('Authorization', `Bearer ${bobToken}`)
         .send({
           roomId: 'room-1',
-          startDate: '2026-06-20',
+          startDate: testDate(18),
           startTime: '10:00',
           endTime: '11:00',
         });
@@ -470,7 +483,7 @@ describe('Create Reservation - POST /api/reservations', () => {
         .set('Authorization', `Bearer ${aliceToken}`)
         .send({
           roomId: 'room-1',
-          startDate: '2026-06-21',
+          startDate: testDate(19),
           startTime: '10:00',
           endTime: '12:00',
         });
@@ -480,7 +493,7 @@ describe('Create Reservation - POST /api/reservations', () => {
         .set('Authorization', `Bearer ${bobToken}`)
         .send({
           roomId: 'room-1',
-          startDate: '2026-06-21',
+          startDate: testDate(19),
           startTime: '11:00',
           endTime: '13:00',
         });
@@ -498,7 +511,7 @@ describe('Create Reservation - POST /api/reservations', () => {
         .set('Authorization', `Bearer ${aliceToken}`)
         .send({
           roomId: 'room-1',
-          startDate: '2026-06-22',
+          startDate: testDate(20),
           startTime: '09:00',
           endTime: '17:00',
         });
@@ -508,7 +521,7 @@ describe('Create Reservation - POST /api/reservations', () => {
         .set('Authorization', `Bearer ${bobToken}`)
         .send({
           roomId: 'room-1',
-          startDate: '2026-06-22',
+          startDate: testDate(20),
           startTime: '12:00',
           endTime: '13:00',
         });
@@ -524,7 +537,7 @@ describe('Create Reservation - POST /api/reservations', () => {
         .set('Authorization', `Bearer ${token}`)
         .send({
           roomId: 'room-1',
-          startDate: '2026-06-23',
+          startDate: testDate(21),
           startTime: '10:00',
           endTime: '11:00',
         });
@@ -537,7 +550,7 @@ describe('Create Reservation - POST /api/reservations', () => {
         .set('Authorization', `Bearer ${token}`)
         .send({
           roomId: 'room-1',
-          startDate: '2026-06-23',
+          startDate: testDate(21),
           startTime: '10:00',
           endTime: '11:00',
         });
@@ -547,15 +560,26 @@ describe('Create Reservation - POST /api/reservations', () => {
       expect(response.body.data.reservationId).toBe(reservationId);
     });
 
-    it('should detect conflict with seed data (Bob tries Alice time)', async () => {
+    it('should detect conflict when Bob tries Alice time', async () => {
+      const aliceToken = await getAuthToken('alice', 'SecurePass123!');
       const bobToken = await getAuthToken('bob', 'BobSecure2026!');
+
+      await request(app)
+        .post('/api/reservations')
+        .set('Authorization', `Bearer ${aliceToken}`)
+        .send({
+          roomId: 'room-1',
+          startDate: testDate(0),
+          startTime: '09:00',
+          endTime: '10:30',
+        });
 
       const response = await request(app)
         .post('/api/reservations')
         .set('Authorization', `Bearer ${bobToken}`)
         .send({
           roomId: 'room-1',
-          startDate: '2026-06-02',
+          startDate: testDate(0),
           startTime: '09:00',
           endTime: '10:00',
         });
@@ -573,7 +597,7 @@ describe('Create Reservation - POST /api/reservations', () => {
         .set('Authorization', `Bearer ${aliceToken}`)
         .send({
           roomId: 'room-1',
-          startDate: '2026-06-25',
+          startDate: testDate(23),
           startTime: '10:00',
           endTime: '11:00',
         });
@@ -583,7 +607,7 @@ describe('Create Reservation - POST /api/reservations', () => {
         .set('Authorization', `Bearer ${bobToken}`)
         .send({
           roomId: 'room-1',
-          startDate: '2026-06-25',
+          startDate: testDate(23),
           startTime: '10:00',
           endTime: '11:00',
         });
@@ -601,7 +625,7 @@ describe('Create Reservation - POST /api/reservations', () => {
         .set('Authorization', `Bearer ${aliceToken}`)
         .send({
           roomId: 'room-3',
-          startDate: '2026-06-26',
+          startDate: testDate(24),
           startTime: '23:00',
           endTime: '02:00',
         });
@@ -611,7 +635,7 @@ describe('Create Reservation - POST /api/reservations', () => {
         .set('Authorization', `Bearer ${bobToken}`)
         .send({
           roomId: 'room-3',
-          startDate: '2026-06-27',
+          startDate: testDate(25),
           startTime: '01:00',
           endTime: '03:00',
         });
@@ -629,7 +653,7 @@ describe('Create Reservation - POST /api/reservations', () => {
         .set('Authorization', `Bearer ${aliceToken}`)
         .send({
           roomId: 'room-3',
-          startDate: '2026-06-28',
+          startDate: testDate(26),
           startTime: '22:00',
           endTime: '01:00',
         });
@@ -639,7 +663,7 @@ describe('Create Reservation - POST /api/reservations', () => {
         .set('Authorization', `Bearer ${bobToken}`)
         .send({
           roomId: 'room-3',
-          startDate: '2026-06-28',
+          startDate: testDate(26),
           startTime: '23:30',
           endTime: '02:00',
         });
@@ -657,7 +681,7 @@ describe('Create Reservation - POST /api/reservations', () => {
         .set('Authorization', `Bearer ${aliceToken}`)
         .send({
           roomId: 'room-1',
-          startDate: '2026-06-29',
+          startDate: testDate(27),
           startTime: '10:00',
           endTime: '12:00',
         });
@@ -667,7 +691,7 @@ describe('Create Reservation - POST /api/reservations', () => {
         .set('Authorization', `Bearer ${bobToken}`)
         .send({
           roomId: 'room-1',
-          startDate: '2026-06-29',
+          startDate: testDate(27),
           startTime: '12:00',
           endTime: '14:00',
         });
@@ -684,7 +708,7 @@ describe('Create Reservation - POST /api/reservations', () => {
         .set('Authorization', `Bearer ${aliceToken}`)
         .send({
           roomId: 'room-3',
-          startDate: '2026-06-30',
+          startDate: testDate(28),
           startTime: '23:00',
           endTime: '02:00',
         });
@@ -694,7 +718,7 @@ describe('Create Reservation - POST /api/reservations', () => {
         .set('Authorization', `Bearer ${bobToken}`)
         .send({
           roomId: 'room-3',
-          startDate: '2026-07-01',
+          startDate: testDate(29),
           startTime: '02:00',
           endTime: '04:00',
         });
